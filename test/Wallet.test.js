@@ -47,8 +47,10 @@ describe("Wallet", function () {
     it("Should revert if insufficient balance", async function () {
       const { wallet, mockToken } = await loadFixture(deployWalletFixture);
             const tokenAddress = await mockToken.getAddress();
-      await expect(wallet.withdrawalToken(tokenAddress, 1000))
+      const tx = await expect(wallet.withdrawalToken(tokenAddress, 1000))
         .to.be.revertedWith("insufficient amount");
+      const receipt = await tx.wait();
+      console.log("Gas used for withdrawlToken():", receipt.gasUsed.toString());
     });
   });
 
@@ -56,15 +58,20 @@ describe("Wallet", function () {
     it("Should receive ETH via receive()", async function () {
       const { wallet, owner } = await loadFixture(deployWalletFixture);
       const walletAddress = await wallet.getAddress();
-      await owner.sendTransaction({ to: walletAddress, value: 100 });
+      const tx = await owner.sendTransaction({ to: walletAddress, value: 100 });
+      const receipt = await tx.wait();
+      console.log("Gas used for receive():", receipt.gasUsed.toString());
       expect(await wallet.checkBalance()).to.equal(100);
     });
 
     it("Should increment count on fallback()", async function () {
       const { wallet, owner } = await loadFixture(deployWalletFixture);
       const walletAddress = await wallet.getAddress();
-      await owner.sendTransaction({ to: walletAddress, data: "0x1234" }); // Invalid calldata triggers fallback
+      const tx = await owner.sendTransaction({ to: walletAddress, data: "0x1234" }); // Invalid calldata triggers fallback
       expect(await wallet.count()).to.equal(1);
+      console.log("Gas used for fallback:", receipt.gasUsed.toString());
+      expect(await wallet.checkBalance()).to.equal(100);
+
     });
   });
 });
